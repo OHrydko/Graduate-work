@@ -66,12 +66,11 @@ def registration():
     return jsonify(status="200", success="false", text="server error")
 
 
-
 @app.route('/login', methods=['POST'])
 def login():
     if request.method == 'POST':
-        mobile = request.args.get('mobile')
-        password = request.args.get('password')
+        mobile = request.form['mobile']
+        password = request.form['password']
 
         try:
             for user in db.session.query(ormUser).filter(ormUser.mobile_number == mobile):
