@@ -66,6 +66,7 @@ def registration():
     return jsonify(status="200", success="false", text="server error")
 
 
+
 @app.route('/login', methods=['POST'])
 def login():
     if request.method == 'POST':
