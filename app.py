@@ -8,8 +8,15 @@ from orm.model import db, ormPhoto, ormUser
 
 app = Flask(__name__)
 app.secret_key = 'key'
-app.debug = True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:meizu123@localhost/ohrydko'
+env = "prod"
+if env == "dev":
+    app.debug = True
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:meizu123@localhost/ohrydko'
+else:
+    app.debug = False
+    app.config[
+        'SQLALCHEMY_DATABASE_URI'] = 'postgres://pzkhopobswyvsu:ec792630a99f73019ca28361fac9374f9b65cdaa29b4649c2' \
+                                     'f76295bc9f189ef@ec2-34-225-82-212.compute-1.amazonaws.com:5432/d3mvjnn9i3nout'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
