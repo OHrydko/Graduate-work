@@ -9,6 +9,7 @@ from orm.model import db, ormPhoto, ormUser
 app = Flask(__name__)
 app.secret_key = 'key'
 env = "prod"
+
 if env == "dev":
     app.debug = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:meizu123@localhost/ohrydko'
