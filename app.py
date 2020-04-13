@@ -68,10 +68,9 @@ def registration():
 
 @app.route('/login', methods=['POST'])
 def login():
-    print(request.data)
     if request.method == 'POST':
-        mobile = request.args.get('mobile')
-        password = request.args.get('password')
+        mobile = request.form['mobile']
+        password = request.form['password']
         print(mobile)
         try:
             for user in db.session.query(ormUser).filter(ormUser.mobile_number == mobile):
