@@ -8,6 +8,7 @@ from pytesseract import pytesseract
 
 from orm.model import db, ormPhoto, ormUser
 
+
 app = Flask(__name__)
 app.secret_key = 'key'
 env = "prod"
