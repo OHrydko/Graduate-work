@@ -1,6 +1,8 @@
 from datetime import datetime
 
+import numpy
 from PIL import Image
+from cv2 import cv2
 from flask import Flask, request, jsonify
 from pytesseract import pytesseract
 
@@ -35,13 +37,37 @@ def upload_file():
     if request.method == 'POST':
         file = request.files['file']
         user = request.form['mobile_phone']
-        text = pytesseract.image_to_string(Image.open(file), lang='ukr')
 
+        img = image_transformation(file.read())
+
+        text = pytesseract.image_to_string(Image.fromarray(img), lang='ukr')
         db.session.add(ormPhoto(user, file.read()))
         db.session.commit()
 
         return jsonify(status="200", success="true", result=text)
     return jsonify(status="200", success="false", text="server error")
+
+
+def image_transformation(file):
+    img = cv2.imdecode(numpy.frombuffer(file, numpy.uint8), cv2.IMREAD_UNCHANGED)
+    img = cv2.resize(img, None, fx=1.2, fy=1.2, interpolation=cv2.INTER_CUBIC)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    kernel = numpy.ones((1, 1), numpy.uint8)
+    img = cv2.dilate(img, kernel, iterations=1)
+    img = cv2.erode(img, kernel, iterations=1)
+    img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
+
+    ret, example_img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
+    value_thresh_binary = cv2.Laplacian(example_img, cv2.CV_64F).var()
+
+    blur = cv2.GaussianBlur(img, (5, 5), 0)
+    ret3, img_ex = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    value_otsu = cv2.Laplacian(img_ex, cv2.CV_64F).var()
+    if value_thresh_binary > value_otsu:
+        print(value_thresh_binary)
+        return example_img
+    print(value_otsu)
+    return img_ex
 
 
 @app.route('/registration', methods=['POST'])
