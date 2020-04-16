@@ -63,6 +63,7 @@ def image_transformation(file):
     blur = cv2.GaussianBlur(img, (5, 5), 0)
     ret3, img_ex = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     value_otsu = cv2.Laplacian(img_ex, cv2.CV_64F).var()
+
     if value_thresh_binary > value_otsu:
         print(value_thresh_binary)
         return example_img
