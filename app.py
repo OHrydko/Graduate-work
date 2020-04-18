@@ -135,9 +135,9 @@ def login():
                         return jsonify(status="200", success="false", text="incorrect password")
 
         except:
-            return jsonify(status="500", success="false", text="don't insert, crash")
+            return jsonify(status="500", success="false", text="server error")
 
-    return jsonify(status="200", success="false", text="user does't exists")
+    return jsonify(status="200", success="false", text="user does't exists", isUser="false")
 
 
 if __name__ == '__main__':
