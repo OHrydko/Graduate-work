@@ -137,7 +137,7 @@ def login():
         except:
             return jsonify(status="500", success="false", text="server error")
 
-    return jsonify(status="200", success="false", text="user does't exists", isUser="false")
+    return jsonify(status="200", success="false", text="user does't exists")
 
 
 if __name__ == '__main__':
