@@ -10,7 +10,7 @@ from orm.model import db, ormPhoto, ormUser
 
 app = Flask(__name__)
 app.secret_key = 'key'
-env = "prod"
+env = "dev"
 
 if env == "dev":
     app.debug = True
@@ -49,6 +49,7 @@ def upload_file():
 
 
 def image_transformation(file):
+    # open image and apply filter
     img = cv2.imdecode(numpy.frombuffer(file, numpy.uint8), cv2.IMREAD_UNCHANGED)
     img = cv2.resize(img, None, fx=1.2, fy=1.2, interpolation=cv2.INTER_CUBIC)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -56,19 +57,40 @@ def image_transformation(file):
     img = cv2.dilate(img, kernel, iterations=1)
     img = cv2.erode(img, kernel, iterations=1)
     img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
-
-    ret, example_img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
-    value_thresh_binary = cv2.Laplacian(example_img, cv2.CV_64F).var()
+    # check bluring for threst binary and otsu method
+    ret, thresh_binary = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
+    value_thresh_binary = cv2.Laplacian(thresh_binary, cv2.CV_64F).var()
 
     blur = cv2.GaussianBlur(img, (5, 5), 0)
-    ret3, img_ex = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    value_otsu = cv2.Laplacian(img_ex, cv2.CV_64F).var()
+    ret3, thresh_otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    value_otsu = cv2.Laplacian(thresh_otsu, cv2.CV_64F).var()
 
     if value_thresh_binary > value_otsu:
         print(value_thresh_binary)
-        return example_img
-    print(value_otsu)
-    return img_ex
+        img = thresh_binary
+    else:
+        print(value_otsu)
+        img = thresh_otsu
+    # get coordinates
+    coords = numpy.column_stack(numpy.where(img > 0))
+    angle = cv2.minAreaRect(coords)[-1]
+    # the `cv2.minAreaRect` function returns values in the
+    # range [-90, 0); as the rectangle rotates clockwise the
+    # returned angle trends to 0 -- in this special case we
+    # need to add 90 degrees to the angle
+    if angle < -45:
+        angle = -(90 + angle)
+    # otherwise, just take the inverse of the angle to make
+    # it positive
+    else:
+        angle = -angle
+
+    (h, w) = img.shape[:2]
+    center = (w // 2, h // 2)
+    m = cv2.getRotationMatrix2D(center, angle, 1.0)
+    rotated = cv2.warpAffine(img, m, (w, h),
+                             flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+    return rotated
 
 
 @app.route('/registration', methods=['POST'])
