@@ -8,7 +8,6 @@ from pytesseract import pytesseract
 
 from orm.model import db, ormPhoto, ormUser
 
-
 app = Flask(__name__)
 app.secret_key = 'key'
 env = "prod"
@@ -83,13 +82,18 @@ def registration():
             datetime_object = datetime.strptime(birthday, '%d-%m-%Y')
             user_name = request.form['user_name']
             password = request.form['password']
+            for user in db.session.query(ormUser).filter(ormUser.mobile_number == mobile):
+                if user.mobile_number == mobile:
+                    return jsonify(status="200", success="false", text="user already exists")
+
             db.session.add(
-                ormUser(name=name, mobile=mobile, last_name=last_name, birthday=datetime_object, user_name=user_name,
+                ormUser(name=name, mobile=mobile, last_name=last_name, birthday=datetime_object,
+                        user_name=user_name,
                         password=password))
             db.session.commit()
             return jsonify(status="200", success="true")
         except:
-            return jsonify(status="500", success="false", text="don't insert, crash")
+            return jsonify(status="500", success="false", text="invalid params")
 
     return jsonify(status="200", success="false", text="server error")
 
