@@ -10,7 +10,7 @@ from orm.model import db, ormPhoto, ormUser
 
 app = Flask(__name__)
 app.secret_key = 'key'
-env = "dev"
+env = "prod"
 
 if env == "dev":
     app.debug = True
