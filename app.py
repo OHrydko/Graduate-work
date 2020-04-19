@@ -10,7 +10,7 @@ from orm.model import db, ormPhoto, ormUser
 
 app = Flask(__name__)
 app.secret_key = 'key'
-env = "prod"
+env = "dev"
 
 if env == "dev":
     app.debug = True
@@ -113,7 +113,7 @@ def registration():
                         user_name=user_name,
                         password=password))
             db.session.commit()
-            return jsonify(status="200", success="true")
+            return jsonify(status="200", success="true", mobile_number=mobile)
         except:
             return jsonify(status="500", success="false", text="invalid params")
 
