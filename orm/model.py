@@ -39,3 +39,20 @@ class ormPhoto(db.Model):
 
     def __repr__(self) -> str:
         return '<photo_id {}>'.format(self.photo_id)
+
+
+class ormE(db.Model):
+    __tablename__ = 'supplement'
+    number_supplement = db.Column(db.String(), primary_key=True)
+    name = db.Column(db.String())
+    categories = db.Column(db.String())
+    danger = db.Column(db.String())
+
+    def __init__(self, number_supplement, name, categories, danger):
+        self.number_supplement = number_supplement
+        self.name = name
+        self.categories = categories
+        self.danger = danger
+
+    def __repr__(self) -> str:
+        return '<photo_id {}>'.format(self.photo_id)
