@@ -43,10 +43,10 @@ def upload_file():
         text = pytesseract.image_to_string(Image.fromarray(img), lang='ukr')
         text.replace("\r\n", "")
         text = "  ".join(text.splitlines())
-        while text.find('  ') != -1:
-            text = text.replace('  ', ' ')
-        print(text)
-        print("регулятор кислотності лимонна кислота" in text)
+        # while text.find('  ') != -1:
+        #     text = text.replace('  ', ' ')
+        # print(text)
+        # print("регулятор кислотності лимонна кислота" in text)
         db.session.add(ormPhoto(user, file.read()))
         db.session.commit()
 
