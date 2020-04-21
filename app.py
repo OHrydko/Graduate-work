@@ -41,6 +41,12 @@ def upload_file():
         img = image_transformation(file.read())
 
         text = pytesseract.image_to_string(Image.fromarray(img), lang='ukr')
+        text.replace("\r\n", "")
+        text = "  ".join(text.splitlines())
+        while text.find('  ') != -1:
+            text = text.replace('  ', ' ')
+        print(text)
+        print("регулятор кислотності лимонна кислота" in text)
         db.session.add(ormPhoto(user, file.read()))
         db.session.commit()
 
@@ -57,20 +63,7 @@ def image_transformation(file):
     img = cv2.dilate(img, kernel, iterations=1)
     img = cv2.erode(img, kernel, iterations=1)
     img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
-    # check bluring for threst binary and otsu method
-    ret, thresh_binary = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
-    value_thresh_binary = cv2.Laplacian(thresh_binary, cv2.CV_64F).var()
 
-    blur = cv2.GaussianBlur(img, (5, 5), 0)
-    ret3, thresh_otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    value_otsu = cv2.Laplacian(thresh_otsu, cv2.CV_64F).var()
-
-    if value_thresh_binary > value_otsu:
-        print(value_thresh_binary)
-        img = thresh_binary
-    else:
-        print(value_otsu)
-        img = thresh_otsu
     # get coordinates
     coords = numpy.column_stack(numpy.where(img > 0))
     angle = cv2.minAreaRect(coords)[-1]
@@ -90,7 +83,23 @@ def image_transformation(file):
     m = cv2.getRotationMatrix2D(center, angle, 1.0)
     rotated = cv2.warpAffine(img, m, (w, h),
                              flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
-    return rotated
+    img = rotated
+    # check bluring for threst binary and otsu method
+    ret, thresh_binary = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
+    value_thresh_binary = cv2.Laplacian(thresh_binary, cv2.CV_64F).var()
+
+    blur = cv2.GaussianBlur(img, (5, 5), 0)
+    ret3, thresh_otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    value_otsu = cv2.Laplacian(thresh_otsu, cv2.CV_64F).var()
+
+    if value_thresh_binary > value_otsu:
+        print(value_thresh_binary)
+        img = thresh_binary
+    else:
+        print(value_otsu)
+        img = thresh_otsu
+
+    return img
 
 
 @app.route('/registration', methods=['POST'])
