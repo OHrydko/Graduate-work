@@ -6,7 +6,7 @@ from cv2 import cv2
 from flask import Flask, request, jsonify
 from pytesseract import pytesseract
 
-from orm.model import db, ormPhoto, ormUser
+from orm.model import db, ormPhoto, ormUser, ormE
 
 app = Flask(__name__)
 app.secret_key = 'key'
@@ -43,10 +43,12 @@ def upload_file():
         text = pytesseract.image_to_string(Image.fromarray(img), lang='ukr')
         text.replace("\r\n", "")
         text = "  ".join(text.splitlines())
-        # while text.find('  ') != -1:
-        #     text = text.replace('  ', ' ')
-        # print(text)
-        # print("регулятор кислотності лимонна кислота" in text)
+        while text.find('  ') != -1:
+            text = text.replace('  ', ' ')
+        text = text.lower()
+        for supplement in db.session.query(ormE):
+            if supplement.name.lower() in text:
+                print(supplement.name)
         db.session.add(ormPhoto(user, file.read()))
         db.session.commit()
 
@@ -147,6 +149,19 @@ def login():
             return jsonify(status="500", success="false", text="server error")
 
     return jsonify(status="200", success="false", text="user does't exists")
+
+
+@app.route('/supplement', methods=['GET'])
+def get_supplement():
+    if request.method == "GET":
+        e = []
+        try:
+            for supplement in db.session.query(ormE):
+                e.append(supplement)
+        except:
+            return jsonify(status="200", success="false", text="server error")
+        return jsonify(status="200", success="true", supplement=[supp.serialize() for supp in e])
+    return jsonify(status="200", success="false", text="server error")
 
 
 if __name__ == '__main__':

@@ -55,4 +55,12 @@ class ormE(db.Model):
         self.danger = danger
 
     def __repr__(self) -> str:
-        return '<photo_id {}>'.format(self.photo_id)
+        return '<number_supplement {}>'.format(self.number_supplement)
+
+    def serialize(self):
+        return {
+            'number_supplement': self.number_supplement,
+            'message': self.name,
+            'categories': self.categories,
+            'danger': self.danger
+        }
