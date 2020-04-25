@@ -6,7 +6,7 @@ from cv2 import cv2
 from flask import Flask, request, jsonify
 from pytesseract import pytesseract
 
-from orm.model import db, ormHistory, ormUser, ormE, ormAllergic, ormProductHasSupplement
+from orm.model import db, ormHistory, ormUser, ormE, ormAllergic, ormProductHasSupplement, ormProduct, History
 
 app = Flask(__name__)
 app.secret_key = 'key'
@@ -32,6 +32,66 @@ def hello_world():
     return 'Hello World!'
 
 
+@app.route('/history', methods=['GET'])
+def history():
+    if request.method == 'GET':
+        mobile_number = request.args.get('mobile_phone')
+        history_list = []
+        for histories in db.session.query(ormHistory).filter(ormHistory.user_mobile == mobile_number):
+            list_of_e = ""
+            for prod in db.session.query(ormProductHasSupplement).filter(
+                    ormProductHasSupplement.name_of_product == histories.name):
+                list_of_e += prod.id_of_supplement + ","
+            history_list.append(
+                History(histories.name, histories.user_mobile, "",
+                        histories.allergic,
+                        list_of_e))
+
+        return jsonify(status="200", success="true", histories=[row.serialize() for row in history_list])
+    return jsonify(status="200", success="false", text="server error")
+
+
+@app.route('/allergic', methods=['POST'])
+def allergic():
+    if request.method == 'POST':
+        try:
+            mobile_number = request.form['mobile_phone']
+            name = request.form['name']
+        except:
+            return jsonify(status="200", success="false", text="bad params")
+
+        try:
+            db.session.add(ormAllergic(name, mobile_number))
+            db.session.commit()
+        except:
+            return jsonify(status="200", success="false", text="bad name")
+
+        return jsonify(status="200", success="true", text="allergic added")
+
+    return jsonify(status="200", success="false", text="server error")
+
+
+@app.route('/product', methods=['POST'])
+def product():
+    if request.method == 'POST':
+        try:
+            mobile_number = request.form['mobile_phone']
+            name = request.form['name']
+            file = request.files['file']
+            ingredient = request.form['ingredient']
+            type_of_product = request.form['type']
+        except:
+            return jsonify(status="200", success="false", text="bad params")
+        danger = 0
+        try:
+            db.session.add(ormProduct(name, mobile_number, file.read(), danger, type_of_product, ingredient))
+            db.session.commit()
+        except:
+            return jsonify(status="200", success="false", text="don't add")
+        return jsonify(status="200", success="true", text="product added")
+    return jsonify(status="200", success="false", text="server error")
+
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if request.method == 'POST':
@@ -42,27 +102,38 @@ def upload_file():
         img = image_transformation(file.read())
 
         text = pytesseract.image_to_string(Image.fromarray(img), lang='ukr')
-        text.replace("\r\n", "")
-        text = "  ".join(text.splitlines())
-        while text.find('  ') != -1:
-            text = text.replace('  ', ' ')
-        text = text.lower()
-        supplement_list = []
-        for supplement in db.session.query(ormE):
-            if supplement.name.lower() in text:
-                supplement_list.append(supplement)
+
+        supplement_list, allergic_from_text = text_analyze(text)
+        try:
+            for supplement in supplement_list:
                 db.session.add(ormProductHasSupplement(name, supplement.number_supplement))
 
-        allergic_from_text = ''
-        for allergic in db.session.query(ormAllergic):
-            if allergic.name.lower() in text:
-                allergic_from_text = allergic.name.lower() + ","
-        db.session.add(ormHistory(name, mobile_number, file.read(), allergic_from_text))
-        db.session.commit()
+            db.session.add(ormHistory(name, mobile_number, file.read(), allergic_from_text))
+            db.session.commit()
+        except:
+            return jsonify(status="200", success="false", text="bad name")
 
         return jsonify(status="200", success="true", result=text,
                        supplement=[supp.serialize() for supp in supplement_list], allergic=allergic_from_text)
     return jsonify(status="200", success="false", text="server error")
+
+
+def text_analyze(text):
+    text.replace("\r\n", "")
+    text = "  ".join(text.splitlines())
+    while text.find('  ') != -1:
+        text = text.replace('  ', ' ')
+    text = text.lower()
+    supplement_list = []
+    for supplement in db.session.query(ormE):
+        if supplement.name.lower() in text:
+            supplement_list.append(supplement)
+
+    allergic_from_text = ''
+    for allergies in db.session.query(ormAllergic):
+        if allergies.name.lower() in text:
+            allergic_from_text += allergies.name.lower() + ","
+    return supplement_list, allergic_from_text
 
 
 def image_transformation(file):

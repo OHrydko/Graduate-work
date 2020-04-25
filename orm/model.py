@@ -1,4 +1,6 @@
+import json
 import uuid
+from base64 import b64encode
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import UUID
@@ -29,8 +31,7 @@ class ormUser(db.Model):
 
 class ormProduct(db.Model):
     __tablename__ = 'product'
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = db.Column(db.String())
+    name = db.Column(db.String(), primary_key=True)
     user_mobile = db.Column(db.String())
     photo = db.Column(db.LargeBinary())
     danger = db.Column(db.Integer())
@@ -104,8 +105,7 @@ class ormProductHasSupplement(db.Model):
 
 class ormHistory(db.Model):
     __tablename__ = 'history'
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = db.Column(db.String())
+    name = db.Column(db.String(), primary_key=True)
     user_mobile = db.Column(db.String())
     photo = db.Column(db.LargeBinary())
     allergic = db.Column(db.String())
@@ -118,3 +118,25 @@ class ormHistory(db.Model):
 
     def __repr__(self) -> str:
         return '<name {}>'.format(self.name)
+
+
+class History:
+
+    def __init__(self, name, user_mobile, photo, allergic, list_of_e):
+        self.name = name
+        self.user_mobile = user_mobile
+        self.photo = photo
+        self.allergic = allergic
+        self.list_of_e = list_of_e
+
+    def __repr__(self) -> str:
+        return '<name {}>'.format(self.name)
+
+    def serialize(self):
+        return {
+            'name': self.name,
+            'user_mobile': self.user_mobile,
+            'photo': self.photo,
+            'allergic': self.allergic,
+            'list_of_e': self.list_of_e
+        }
