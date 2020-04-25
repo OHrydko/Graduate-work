@@ -6,11 +6,11 @@ from cv2 import cv2
 from flask import Flask, request, jsonify
 from pytesseract import pytesseract
 
-from orm.model import db, ormPhoto, ormUser, ormE
+from orm.model import db, ormHistory, ormUser, ormE, ormAllergic, ormProductHasSupplement
 
 app = Flask(__name__)
 app.secret_key = 'key'
-env = "prod"
+env = "dev"
 
 if env == "dev":
     app.debug = True
@@ -25,6 +25,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 db.app = app
+db.create_all()
 
 
 @app.route('/')
@@ -36,7 +37,8 @@ def hello_world():
 def upload_file():
     if request.method == 'POST':
         file = request.files['file']
-        user = request.form['mobile_phone']
+        mobile_number = request.form['mobile_phone']
+        name = request.form['name']
 
         img = image_transformation(file.read())
 
@@ -46,13 +48,21 @@ def upload_file():
         while text.find('  ') != -1:
             text = text.replace('  ', ' ')
         text = text.lower()
+        supplement_list = []
         for supplement in db.session.query(ormE):
             if supplement.name.lower() in text:
-                print(supplement.name)
-        db.session.add(ormPhoto(user, file.read()))
+                supplement_list.append(supplement)
+                db.session.add(ormProductHasSupplement(name, supplement.number_supplement))
+
+        allergic_from_text = ''
+        for allergic in db.session.query(ormAllergic):
+            if allergic.name.lower() in text:
+                allergic_from_text = allergic.name.lower() + ","
+        db.session.add(ormHistory(name, mobile_number, file.read(), allergic_from_text))
         db.session.commit()
 
-        return jsonify(status="200", success="true", result=text)
+        return jsonify(status="200", success="true", result=text,
+                       supplement=[supp.serialize() for supp in supplement_list], allergic=allergic_from_text)
     return jsonify(status="200", success="false", text="server error")
 
 

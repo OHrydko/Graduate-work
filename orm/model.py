@@ -27,18 +27,26 @@ class ormUser(db.Model):
         return '<user {}>'.format(self.mobile_number)
 
 
-class ormPhoto(db.Model):
-    __tablename__ = 'photo'
-    photo_id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+class ormProduct(db.Model):
+    __tablename__ = 'product'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String())
     user_mobile = db.Column(db.String())
     photo = db.Column(db.LargeBinary())
+    danger = db.Column(db.Integer())
+    type = db.Column(db.String())
+    ingredient = db.Column(db.String())
 
-    def __init__(self, user_mobile, photo):
+    def __init__(self, name, user_mobile, photo, danger, type, ingredient):
         self.user_mobile = user_mobile
         self.photo = photo
+        self.name = name
+        self.danger = danger
+        self.type = type
+        self.ingredient = ingredient
 
     def __repr__(self) -> str:
-        return '<photo_id {}>'.format(self.photo_id)
+        return '<name {}>'.format(self.name)
 
 
 class ormE(db.Model):
@@ -64,3 +72,49 @@ class ormE(db.Model):
             'categories': self.categories,
             'danger': self.danger
         }
+
+
+class ormAllergic(db.Model):
+    __tablename__ = 'allergic'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String())
+    user_mobile = db.Column(db.String())
+
+    def __init__(self, name, user_mobile):
+        self.user_mobile = user_mobile
+        self.name = name
+
+    def __repr__(self) -> str:
+        return '<id {}>'.format(self.id)
+
+
+class ormProductHasSupplement(db.Model):
+    __tablename__ = 'product_has_supplement'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name_of_product = db.Column(db.String())
+    id_of_supplement = db.Column(db.String())
+
+    def __init__(self, name_of_product, id_of_supplement):
+        self.id_of_supplement = id_of_supplement
+        self.name_of_product = name_of_product
+
+    def __repr__(self) -> str:
+        return '<id {}>'.format(self.id)
+
+
+class ormHistory(db.Model):
+    __tablename__ = 'history'
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String())
+    user_mobile = db.Column(db.String())
+    photo = db.Column(db.LargeBinary())
+    allergic = db.Column(db.String())
+
+    def __init__(self, name, user_mobile, photo, allergic):
+        self.name = name
+        self.user_mobile = user_mobile
+        self.photo = photo
+        self.allergic = allergic
+
+    def __repr__(self) -> str:
+        return '<name {}>'.format(self.name)
