@@ -36,7 +36,7 @@ def hello_world():
 @app.route('/history', methods=['GET'])
 def history():
     if request.method == 'GET':
-        mobile_number = request.form['mobile_phone']
+        mobile_number = request.args.get('mobile_phone')
         history_list = []
 
         for histories in db.session.query(ormHistory).filter(ormHistory.user_mobile == mobile_number):
