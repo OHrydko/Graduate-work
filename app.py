@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime
 
 import numpy
@@ -44,9 +45,10 @@ def history():
             for prod in db.session.query(ormProductHasSupplement).filter(
                     ormProductHasSupplement.name_of_product == histories.name):
                 list_of_e += prod.id_of_supplement + ","
-            photo = str(histories.photo)
-
-            history_list.append(History(histories.name, histories.user_mobile, photo,
+            base64_encoded_data = base64.b64encode(histories.photo)
+            base64_message = base64_encoded_data.decode('utf-8')
+            print(base64_message)
+            history_list.append(History(histories.name, histories.user_mobile, base64_message,
                                         histories.allergic, list_of_e))
 
         return jsonify(status="200", success="true", histories=[row.serialize() for row in history_list])
