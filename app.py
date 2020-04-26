@@ -10,7 +10,7 @@ from orm.model import db, ormHistory, ormUser, ormE, ormAllergic, ormProductHasS
 
 app = Flask(__name__)
 app.secret_key = 'key'
-env = "prod"
+env = "dev"
 
 if env == "dev":
     app.debug = True
@@ -25,6 +25,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 db.app = app
+db.create_all()
 
 
 @app.route('/')
@@ -35,17 +36,18 @@ def hello_world():
 @app.route('/history', methods=['GET'])
 def history():
     if request.method == 'GET':
-        mobile_number = request.args.get('mobile_phone')
+        mobile_number = request.form['mobile_phone']
         history_list = []
+
         for histories in db.session.query(ormHistory).filter(ormHistory.user_mobile == mobile_number):
             list_of_e = ""
             for prod in db.session.query(ormProductHasSupplement).filter(
                     ormProductHasSupplement.name_of_product == histories.name):
                 list_of_e += prod.id_of_supplement + ","
-            history_list.append(
-                History(histories.name, histories.user_mobile, "",
-                        histories.allergic,
-                        list_of_e))
+            photo = str(histories.photo)
+
+            history_list.append(History(histories.name, histories.user_mobile, photo,
+                                        histories.allergic, list_of_e))
 
         return jsonify(status="200", success="true", histories=[row.serialize() for row in history_list])
     return jsonify(status="200", success="false", text="server error")
@@ -98,8 +100,8 @@ def upload_file():
         file = request.files['file']
         mobile_number = request.form['mobile_phone']
         name = request.form['name']
-
-        img = image_transformation(file.read())
+        data = file.read()
+        img = image_transformation(data)
 
         text = pytesseract.image_to_string(Image.fromarray(img), lang='ukr')
 
@@ -108,7 +110,7 @@ def upload_file():
             for supplement in supplement_list:
                 db.session.add(ormProductHasSupplement(name, supplement.number_supplement))
 
-            db.session.add(ormHistory(name, mobile_number, file.read(), allergic_from_text))
+            db.session.add(ormHistory(name, mobile_number, data, allergic_from_text))
             db.session.commit()
         except:
             return jsonify(status="200", success="false", text="bad name")

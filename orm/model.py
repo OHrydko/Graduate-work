@@ -107,7 +107,7 @@ class ormHistory(db.Model):
     __tablename__ = 'history'
     name = db.Column(db.String(), primary_key=True)
     user_mobile = db.Column(db.String())
-    photo = db.Column(db.LargeBinary())
+    photo = db.Column(db.LargeBinary)
     allergic = db.Column(db.String())
 
     def __init__(self, name, user_mobile, photo, allergic):
