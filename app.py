@@ -11,7 +11,7 @@ from orm.model import db, ormHistory, ormUser, ormE, ormAllergic, ormProductHasS
 
 app = Flask(__name__)
 app.secret_key = 'key'
-env = "prod"
+env = "dev"
 
 if env == "dev":
     app.debug = True
@@ -26,7 +26,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 db.app = app
-db.create_all()
 
 
 @app.route('/')
