@@ -69,7 +69,7 @@ class ormE(db.Model):
     def serialize(self):
         return {
             'number_supplement': self.number_supplement,
-            'message': self.name,
+            'name': self.name,
             'categories': self.categories,
             'danger': self.danger
         }

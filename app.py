@@ -40,15 +40,16 @@ def history():
         history_list = []
 
         for histories in db.session.query(ormHistory).filter(ormHistory.user_mobile == mobile_number):
-            list_of_e = ""
+            list_of_e = []
             for prod in db.session.query(ormProductHasSupplement).filter(
                     ormProductHasSupplement.name_of_product == histories.name):
-                list_of_e += prod.id_of_supplement + ","
+                for supplement in db.session.query(ormE).filter(ormE.number_supplement == prod.id_of_supplement):
+                    list_of_e.append(supplement)
+
             base64_encoded_data = base64.b64encode(histories.photo)
             base64_message = base64_encoded_data.decode('utf-8')
-            print(base64_message)
             history_list.append(History(histories.name, histories.user_mobile, base64_message,
-                                        histories.allergic, list_of_e))
+                                        histories.allergic, list_of_e=[row.serialize() for row in list_of_e]))
 
         return jsonify(status="200", success="true", histories=[row.serialize() for row in history_list])
     return jsonify(status="200", success="false", text="server error")
@@ -83,9 +84,11 @@ def product():
             file = request.files['file']
             ingredient = request.form['ingredient']
             type_of_product = request.form['type']
+            supplement_list = get_supplement_from_text(ingredient)
         except:
             return jsonify(status="200", success="false", text="bad params")
-        danger = 0
+        danger = calculate_danger(supplement_list)
+
         try:
             db.session.add(ormProduct(name, mobile_number, file.read(), danger, type_of_product, ingredient))
             db.session.commit()
@@ -106,7 +109,8 @@ def upload_file():
 
         text = pytesseract.image_to_string(Image.fromarray(img), lang='ukr')
 
-        supplement_list, allergic_from_text = text_analyze(text)
+        supplement_list = get_supplement_from_text(text)
+        allergic_from_text = get_allergic(text, mobile_number)
         try:
             for supplement in supplement_list:
                 db.session.add(ormProductHasSupplement(name, supplement.number_supplement))
@@ -121,22 +125,34 @@ def upload_file():
     return jsonify(status="200", success="false", text="server error")
 
 
-def text_analyze(text):
+def text_edit(text):
     text.replace("\r\n", "")
     text = "  ".join(text.splitlines())
     while text.find('  ') != -1:
         text = text.replace('  ', ' ')
     text = text.lower()
+    return text
+
+
+def get_supplement_from_text(text):
+    text = text_edit(text)
     supplement_list = []
     for supplement in db.session.query(ormE):
         if supplement.name.lower() in text:
             supplement_list.append(supplement)
 
+    return supplement_list
+
+
+def get_allergic(text, mobile_number):
+    text = text_edit(text)
     allergic_from_text = ''
-    for allergies in db.session.query(ormAllergic):
+    for allergies in db.session.query(ormAllergic).filter(ormAllergic.user_mobile == mobile_number):
         if allergies.name.lower() in text:
             allergic_from_text += allergies.name.lower() + ","
-    return supplement_list, allergic_from_text
+    if len(allergic_from_text) > 1:
+        allergic_from_text = allergic_from_text.rstrip(',')
+    return allergic_from_text
 
 
 def image_transformation(file):
@@ -245,6 +261,23 @@ def get_supplement():
             return jsonify(status="200", success="false", text="server error")
         return jsonify(status="200", success="true", supplement=[supp.serialize() for supp in e])
     return jsonify(status="200", success="false", text="server error")
+
+
+def calculate_danger(supplement_list):
+    danger = 0
+    for row in supplement_list:
+        if row.danger == "Висока":
+            danger += 10
+        elif row.danger == "Середня":
+            danger += 7
+        elif row.danger == "Низька":
+            danger += 3
+        elif row.danger == "Дуже низька":
+            danger += 1
+    # if len(allergic_from_text) > 0:
+    #     list_of_allergic = allergic_from_text.split(",")
+    #     danger += len(list_of_allergic) * 10
+    return danger
 
 
 if __name__ == '__main__':
