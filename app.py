@@ -13,7 +13,6 @@ app = Flask(__name__)
 app.secret_key = 'key'
 env = "prod"
 
-
 if env == "dev":
     app.debug = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:meizu123@localhost/ohrydko'
@@ -147,12 +146,10 @@ def get_supplement_from_text(text):
 
 def get_allergic(text, mobile_number):
     text = text_edit(text)
-    allergic_from_text = ''
+    allergic_from_text = []
     for allergies in db.session.query(ormAllergic).filter(ormAllergic.user_mobile == mobile_number):
         if allergies.name.lower() in text:
-            allergic_from_text += allergies.name.lower() + ","
-    if len(allergic_from_text) > 1:
-        allergic_from_text = allergic_from_text.rstrip(',')
+            allergic_from_text.append(allergies.name.lower())
     return allergic_from_text
 
 
@@ -261,6 +258,20 @@ def get_supplement():
         except:
             return jsonify(status="200", success="false", text="server error")
         return jsonify(status="200", success="true", supplement=[supp.serialize() for supp in e])
+    return jsonify(status="200", success="false", text="server error")
+
+
+@app.route('/allergic_user', methods=['GET'])
+def get_allergic_user():
+    if request.method == "GET":
+        mobile_number = request.args.get("mobile")
+        user_allergic = []
+        try:
+            for allergics in db.session.query(ormAllergic).filter(ormAllergic.user_mobile == mobile_number):
+                user_allergic.append(allergics.name)
+        except:
+            return jsonify(status="200", success="false", text="server error")
+        return jsonify(status="200", success="true", allergic=user_allergic)
     return jsonify(status="200", success="false", text="server error")
 
 
