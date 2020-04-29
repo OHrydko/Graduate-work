@@ -48,8 +48,9 @@ def history():
 
             base64_encoded_data = base64.b64encode(histories.photo)
             base64_message = base64_encoded_data.decode('utf-8')
+            allergic_list = histories.allergic.split(',')
             history_list.append(History(histories.name, histories.user_mobile, base64_message,
-                                        histories.allergic, list_of_e=[row.serialize() for row in list_of_e]))
+                                        allergic_list, list_of_e=[row.serialize() for row in list_of_e]))
 
         return jsonify(status="200", success="true", histories=[row.serialize() for row in history_list])
     return jsonify(status="200", success="false", text="server error")
@@ -110,18 +111,19 @@ def upload_file():
         text = pytesseract.image_to_string(Image.fromarray(img), lang='ukr')
 
         supplement_list = get_supplement_from_text(text)
-        allergic_from_text = get_allergic(text, mobile_number)
+        allergic_list = get_allergic(text, mobile_number)
+        allergic_text = ','.join(allergic_list)
         try:
             for supplement in supplement_list:
                 db.session.add(ormProductHasSupplement(name, supplement.number_supplement))
 
-            db.session.add(ormHistory(name, mobile_number, data, allergic_from_text))
+            db.session.add(ormHistory(name, mobile_number, data, allergic_text))
             db.session.commit()
         except:
             return jsonify(status="200", success="false", text="bad name")
 
         return jsonify(status="200", success="true", result=text,
-                       supplement=[supp.serialize() for supp in supplement_list], allergic=allergic_from_text)
+                       supplement=[supp.serialize() for supp in supplement_list], allergic=allergic_list)
     return jsonify(status="200", success="false", text="server error")
 
 
