@@ -122,6 +122,7 @@ def upload_file():
         except:
             return jsonify(status="200", success="false", text="bad name")
 
+
         return jsonify(status="200", success="true", result=text,
                        supplement=[supp.serialize() for supp in supplement_list], allergic=allergic_list)
     return jsonify(status="200", success="false", text="server error")
