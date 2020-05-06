@@ -110,16 +110,22 @@ def upload_file():
         img = image_transformation(data)
 
         text = pytesseract.image_to_string(Image.fromarray(img), lang='ukr')
-
+        print("text")
         supplement_list = get_supplement_from_text(text)
+        print("supp")
+
         allergic_list = get_allergic(text, mobile_number)
+        print("allergic")
+
         allergic_text = ','.join(allergic_list)
         try:
             for supplement in supplement_list:
                 db.session.add(ormProductHasSupplement(name, supplement.number_supplement))
-
+            print("suppDB")
             db.session.add(ormHistory(name, mobile_number, data, allergic_text))
+            print("historyDB")
             db.session.commit()
+            print("insert")
         except:
             return jsonify(status="200", success="false", text="bad name")
 
