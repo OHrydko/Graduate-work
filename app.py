@@ -41,14 +41,17 @@ def prediction():
         new_product = []
         types = request.args.get('type')
         mobile = request.args.get('mobile')
+        danger = request.args.get('danger')
         for prod in db.session.query(ormProduct).filter(types == ormProduct.type):
-            product.append(prod)
+            if int(prod.danger) < int(danger):
+                product.append(prod)
         for row in product:
             if len(get_allergic(row.ingredient, mobile)) == 0:
                 new_product.append(row)
         result = {}
         min_value = new_product[0].danger
         if (len(new_product)) > 1:
+            result = to_dict(new_product[0])
             for row in new_product[1:]:
                 if min_value > row.danger:
                     result = to_dict(row)
@@ -149,7 +152,7 @@ def upload_file():
 
         allergic_list = get_allergic(text, mobile_number)
         print("allergic")
-
+        danger = calculate_danger(supplement_list)
         allergic_text = ','.join(allergic_list)
         try:
             for supplement in supplement_list:
@@ -163,7 +166,7 @@ def upload_file():
             return jsonify(status="200", success="false", text="bad name")
 
         return jsonify(status="200", success="true", result=text,
-                       supplement=[supp.serialize() for supp in supplement_list], allergic=allergic_list)
+                       supplement=[supp.serialize() for supp in supplement_list], allergic=allergic_list, danger=danger)
     return jsonify(status="200", success="false", text="server error")
 
 
