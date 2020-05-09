@@ -16,7 +16,7 @@ env = "prod"
 
 if env == "dev":
     app.debug = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:meizu123@localhost/ohrydko'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://ohrydko:meizu123@localhost/postgres'
 else:
     app.debug = False
     app.config[
@@ -32,6 +32,39 @@ db.app = app
 @app.route('/')
 def hello_world():
     return 'Hello World!'
+
+
+@app.route('/prediction', methods=['GET'])
+def prediction():
+    if request.method == 'GET':
+        product = []
+        new_product = []
+        types = request.args.get('type')
+        mobile = request.args.get('mobile')
+        for prod in db.session.query(ormProduct).filter(types == ormProduct.type):
+            product.append(prod)
+        for row in product:
+            if len(get_allergic(row.ingredient, mobile)) == 0:
+                new_product.append(row)
+        result = {}
+        min_value = new_product[0].danger
+        if (len(new_product)) > 1:
+            for row in new_product[1:]:
+                if min_value > row.danger:
+                    result = to_dict(row)
+                    min_value = row.danger
+        elif len(new_product) == 1:
+            result = to_dict(new_product[0])
+        return jsonify(status="200", success="true", product=result)
+    return jsonify(status="200", success="false", text="server error")
+
+
+def to_dict(products):
+    result = {"name": products.name, "ingredient": products.ingredient, "type": products.type}
+    base64_encoded_data = base64.b64encode(products.photo)
+    base64_message = base64_encoded_data.decode('utf-8')
+    result["photo"] = base64_message
+    return result
 
 
 @app.route('/history', methods=['GET'])

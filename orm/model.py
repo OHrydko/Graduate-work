@@ -1,6 +1,4 @@
-import json
 import uuid
-from base64 import b64encode
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import UUID
@@ -48,6 +46,16 @@ class ormProduct(db.Model):
 
     def __repr__(self) -> str:
         return '<name {}>'.format(self.name)
+
+    def serialize(self):
+        return {
+            'name': self.number_supplement,
+            'user_mobile': self.name,
+            'photo': self.categories,
+            'danger': self.danger,
+            'type': self.type,
+            'ingredient': self.ingredient
+        }
 
 
 class ormE(db.Model):

@@ -74,4 +74,4 @@ def convolution(image, kernel, average=False, verbose=False):
 
 if __name__ == '__main__':
     img = cv2.imread('test photo/2020-04-16 16.58.59.jpg')
-    gaussian_blur(img, 9, True)
+    gaussian_blur(img, 5, True)
