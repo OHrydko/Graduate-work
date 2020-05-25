@@ -285,6 +285,7 @@ def image_transformation(file):
 
     blur = cv2.GaussianBlur(img, (5, 5), 0)
     # blur = gaussian_blur(img, 5)
+    # img = otsu(blur)
     ret3, thresh_otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     value_otsu = cv2.Laplacian(thresh_otsu, cv2.CV_64F).var()
 
@@ -294,7 +295,6 @@ def image_transformation(file):
     else:
         print(value_otsu)
         img = thresh_otsu
-
     return img
 
 
