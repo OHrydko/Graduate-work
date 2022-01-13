@@ -1,4 +1,4 @@
-pillow==7.1.1
+pillow==9.0.0
 pytesseract==0.3.3
 certifi==2020.4.5.1
 chardet==3.0.4
