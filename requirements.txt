@@ -3,7 +3,7 @@ pytesseract==0.3.3
 certifi==2020.4.5.1
 chardet==3.0.4
 opencv-python==4.2.0.34
-numpy==1.18.2
+numpy==1.22.0
 Click==7.1.1
 Flask==1.1.2
 flask-heroku==0.1.9
